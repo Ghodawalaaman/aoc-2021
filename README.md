@@ -1,3 +1,4 @@
 # Compile
-`make`
-`./main`
+```make
+./main
+```
