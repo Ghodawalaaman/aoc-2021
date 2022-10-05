@@ -1,0 +1,22 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+size_t read_line_from_file(FILE* file,char* buf){
+  fread();
+}
+
+int main(void){
+
+  FILE* file = fopen("./sample.txt","r");
+  if(file == NULL){
+    fprintf(stderr,"ERROR: Could not open the file");
+    exit(1);
+  }
+  char* buf = NULL;
+  
+  while(read_line_from_file(file,buf)){
+    printf("%s\n",buf);
+  }
+  
+  return 0;
+}
