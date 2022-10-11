@@ -4,13 +4,16 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <assert.h>
 
 #define MAX_DAYS  256
 #define MAX_TIMER 8
 
+typedef __int128_t ll;
+
 // Some global variable
 
-static int fishes_footprint[MAX_TIMER+1][MAX_DAYS+1]; // I really can't come up with a good name.
+static ll fishes_spawn_cnt[MAX_DAYS]; // I really can't come up with a good name.
 
 typedef struct{
   int timer;
@@ -99,7 +102,61 @@ int count_fish(Fish* fishes,int num_of_fishes){
   return result;
 }
 
-int part1(const char* file_path){
+void print_fishes(){
+  printf("\n---------------------------------------------\n");
+
+  for(int day=0; day<MAX_DAYS; day++)
+  printf("num of fishes on day %d is %llu\n",day+1,fishes_spawn_cnt[day]);
+  
+  printf("---------------------------------------------\n");
+}
+
+ll count_fish2(Fish* fishes,int num_of_fishes,int days){
+  memset(fishes_spawn_cnt,0, sizeof(ll) * (MAX_DAYS));
+  int cday = 0;
+
+  // Counting the number of child fishes produced by the parents.
+  for(int cfish=0; cfish<num_of_fishes; cfish++){
+    cday = fishes[cfish].timer;
+    fishes_spawn_cnt[cday]++;
+
+    while(cday < days){
+      cday += 7;
+      if(cday >= days) break;
+      fishes_spawn_cnt[cday]++;
+    }
+  }
+
+  // Counting the number of child fishes produce by the child fishes.
+  for(int day=0; day<days; day++){
+    cday = day;
+    ll num_of_parents = fishes_spawn_cnt[day];
+    cday += (9 - 0);
+    if(cday >= days) break;
+    fishes_spawn_cnt[cday] += num_of_parents;
+
+    while(cday < days){
+      cday += 7;
+      if(cday >= days) break;
+      fishes_spawn_cnt[cday] += num_of_parents;
+    }
+    
+  }
+
+  print_fishes();
+  ll sum = 0;
+  ll psum = sum;
+  // Calculate the total number of fishes
+  for(int day=0; day<days; day++){
+    psum = sum;
+    assert(sum >= psum && "Interger overflow!!");
+    sum += fishes_spawn_cnt[day];
+  }
+
+  return sum + (ll)num_of_fishes;
+}
+
+ll part1(const char* file_path){
   File file = Load_file(file_path);
   int num_of_fishes = file.size / 2;
   Fish *fishes = (Fish*) malloc(sizeof(Fish) * num_of_fishes);
@@ -113,68 +170,34 @@ int part1(const char* file_path){
   
   //display_fish_info(fishes,num_of_fishes);
 
-  int total_fish = count_fish(fishes,num_of_fishes);
+  ll total_fish = count_fish(fishes,num_of_fishes);
   free(fishes);
   return total_fish;
 }
 
-void print_fishes_at_timestamp(int day){
-  printf("\n---------------------------------------------\n");
-  
-  for(int timer=0; timer<=MAX_TIMER; timer++){
-    printf("NUM OF FISHES AT DAY %2d WITH TIMER %2d IS %2d\n",day,timer,fishes_footprint[timer][day]);
-  }
-
-  printf("---------------------------------------------\n");
-}
-
-int count_fish2(Fish* fishes,int num_of_fishes,int days){
-  memset(fishes_footprint,0, sizeof(int) * (MAX_TIMER+1) * (MAX_DAYS+1));
-
-  int cday = 0;
-  for(int fish=0; fish<num_of_fishes; fish++){
-    fishes_footprint[fishes[fish].timer][cday]++;
-  }
-  
-  while(cday <= days){
-    for(int timer=0; timer<=MAX_TIMER; timer++){
-      int num_of_parents = fishes_footprint[timer][cday];
-      int days_left = days - cday - timer - 1;
-      while(days_left >= 7){
-	int spawn_day = days - days_left;
-	fishes_footprint[8][spawn_day] += num_of_parents;
-	days_left -= 7;
-      }
-    }
-    cday++;
-  }
-  
-  print_fishes_at_timestamp(2);
-  return 0;
-}
-
-int part2(const char* file_path){
+ll part2(const char* file_path){
   File file = Load_file(file_path);
   int num_of_fishes = file.size / 2;
   Fish *fishes = (Fish*) malloc(sizeof(Fish) * num_of_fishes);
   char* data = file.data;
-
+  int days = 256;
+  
   for(int i=0; 2*i < file.size; i++){
     fishes[i].timer = (int)*data - 48;
-    fishes[i].remaining_days = 80;
+    fishes[i].remaining_days = days;
     data += 2;
   }
-  
+  __int128_t aman;
   //display_fish_info(fishes,num_of_fishes);
 
-  int total_fish = count_fish2(fishes,num_of_fishes,256);
+  ll total_fish = count_fish2(fishes,num_of_fishes,days);
   free(fishes);
   return total_fish;
 
 }
 
 int main(void){
-  printf("part1: %d\n",part1("./sample.txt"));
-  printf("part2: %d\n",part2("./sample.txt"));
+  printf("part1: %llu\n",part1("./input.txt"));
+  printf("part2: %llu\n",part2("./input.txt"));
   return 0;
 }
